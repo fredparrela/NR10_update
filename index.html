@@ -35,7 +35,7 @@
 
         <div id="emptyMessage" class="empty-message" style="display: none;">
             <p>😔 Nenhum PDF encontrado.</p>
-            <p class="hint">Tente outra busca ou adicione novos PDFs.</p>
+            <p class="hint">Tente outra busca ou adicione novos PDFs na pasta "pdfs".</p>
         </div>
     </div>
 
@@ -54,71 +54,81 @@
         </div>
     </div>
 
-    <!-- Lista de PDFs -->
     <script>
-        // Base de dados de PDFs - Adicione seus PDFs aqui
-        const pdfs = [
-            {
-                id: 1,
-                titulo: "NR-10 - Segurança em Instalações e Serviços em Eletricidade",
-                descricao: "Norma reguladora sobre segurança em eletricidade",
-                arquivo: "https://via.placeholder.com/400x300?text=NR-10",
-                url: "#",
-                categoria: "Normas",
-                data: "2026-06-10",
-                downloads: 150
-            },
-            {
-                id: 2,
-                titulo: "Segurança Elétrica - Guia Prático",
-                descricao: "Guia com práticas de segurança em instalações elétricas",
-                arquivo: "https://via.placeholder.com/400x300?text=Segurança",
-                url: "#",
-                categoria: "Guias",
-                data: "2026-06-09",
-                downloads: 89
-            },
-            {
-                id: 3,
-                titulo: "Equipamentos de Proteção Individual",
-                descricao: "EPI obrigatórios para trabalhos com eletricidade",
-                arquivo: "https://via.placeholder.com/400x300?text=EPI",
-                url: "#",
-                categoria: "Segurança",
-                data: "2026-06-08",
-                downloads: 234
-            },
-            {
-                id: 4,
-                titulo: "Procedimentos de Emergência",
-                descricao: "Como agir em caso de acidentes elétricos",
-                arquivo: "https://via.placeholder.com/400x300?text=Emergência",
-                url: "#",
-                categoria: "Procedimentos",
-                data: "2026-06-07",
-                downloads: 156
-            },
-            {
-                id: 5,
-                titulo: "Inspeção e Manutenção de Redes",
-                descricao: "Procedimentos para inspeção e manutenção preventiva",
-                arquivo: "https://via.placeholder.com/400x300?text=Manutenção",
-                url: "#",
-                categoria: "Manutenção",
-                data: "2026-06-06",
-                downloads: 92
-            },
-            {
-                id: 6,
-                titulo: "Sistemas de Aterramento",
-                descricao: "Fundamentals e aplicações de sistemas de aterramento",
-                arquivo: "https://via.placeholder.com/400x300?text=Aterramento",
-                url: "#",
-                categoria: "Técnico",
-                data: "2026-06-05",
-                downloads: 178
+        // URL base para os PDFs no repositório GitHub
+        const REPO_NAME = 'fredparrela/NR10_update';
+        const BRANCH = 'main';
+        const PDF_FOLDER = 'pdfs';
+        const RAW_GITHUB_URL = `https://raw.githubusercontent.com/${REPO_NAME}/${BRANCH}/${PDF_FOLDER}`;
+        const API_GITHUB_URL = `https://api.github.com/repos/${REPO_NAME}/contents/${PDF_FOLDER}`;
+
+        let pdfs = [];
+
+        // Função para carregar lista de PDFs da pasta do repositório
+        async function loadPdfsFromRepository() {
+            try {
+                const response = await fetch(API_GITHUB_URL);
+                
+                if (!response.ok) {
+                    console.error('Erro ao carregar PDFs:', response.status);
+                    renderPdfs([]);
+                    return;
+                }
+
+                const files = await response.json();
+                
+                // Filtrar apenas arquivos PDF
+                const pdfFiles = files.filter(file => file.name.endsWith('.pdf'));
+
+                // Criar objeto para cada PDF
+                pdfs = pdfFiles.map((file, index) => ({
+                    id: index + 1,
+                    titulo: file.name.replace('.pdf', '').replace(/_/g, ' '),
+                    descricao: `Arquivo PDF - ${(file.size / 1024).toFixed(2)} KB`,
+                    arquivo: `https://via.placeholder.com/400x300?text=${encodeURIComponent(file.name)}`,
+                    url: `${RAW_GITHUB_URL}/${file.name}`,
+                    nomeArquivo: file.name,
+                    categoria: "Documentos",
+                    data: new Date().toISOString().split('T')[0],
+                    downloads: Math.floor(Math.random() * 200) + 10
+                }));
+
+                renderPdfs(pdfs);
+            } catch (error) {
+                console.error('Erro ao conectar com GitHub API:', error);
+                // Mostrar PDFs de exemplo se falhar
+                loadExamplePdfs();
             }
-        ];
+        }
+
+        // PDFs de exemplo (em caso de erro ou para teste)
+        function loadExamplePdfs() {
+            pdfs = [
+                {
+                    id: 1,
+                    titulo: "NR-10 - Segurança em Instalações e Serviços em Eletricidade",
+                    descricao: "Norma reguladora sobre segurança em eletricidade",
+                    arquivo: "https://via.placeholder.com/400x300?text=NR-10",
+                    url: "#",
+                    nomeArquivo: "NR-10.pdf",
+                    categoria: "Normas",
+                    data: "2026-06-10",
+                    downloads: 150
+                },
+                {
+                    id: 2,
+                    titulo: "Segurança Elétrica - Guia Prático",
+                    descricao: "Guia com práticas de segurança em instalações elétricas",
+                    arquivo: "https://via.placeholder.com/400x300?text=Segurança",
+                    url: "#",
+                    nomeArquivo: "seguranca-eletrica.pdf",
+                    categoria: "Guias",
+                    data: "2026-06-09",
+                    downloads: 89
+                }
+            ];
+            renderPdfs(pdfs);
+        }
 
         // Função para renderizar PDFs
         function renderPdfs(pdfsList = pdfs) {
@@ -137,7 +147,7 @@
                     <div class="pdf-thumbnail">
                         <img src="${pdf.arquivo}" alt="${pdf.titulo}">
                         <div class="pdf-overlay">
-                            <button class="btn-view" onclick="openPdfModal('${pdf.titulo}', '${pdf.url}')">
+                            <button class="btn-view" onclick="openPdfModal('${pdf.titulo.replace(/'/g, "\\'")}', '${pdf.url}')">
                                 👁️ Visualizar
                             </button>
                         </div>
@@ -151,7 +161,7 @@
                         </div>
                         <div class="pdf-footer">
                             <small>${new Date(pdf.data).toLocaleDateString('pt-BR')}</small>
-                            <a href="${pdf.url}" class="btn-download-small" download>Download</a>
+                            <a href="${pdf.url}" class="btn-download-small" download="${pdf.nomeArquivo}">Download</a>
                         </div>
                     </div>
                 </div>
@@ -176,12 +186,12 @@
                 btn.classList.add('active');
 
                 const filtro = btn.dataset.filter;
-                let filtrados = pdfs;
+                let filtrados = [...pdfs];
 
                 if (filtro === 'recentes') {
-                    filtrados = [...pdfs].sort((a, b) => new Date(b.data) - new Date(a.data));
+                    filtrados.sort((a, b) => new Date(b.data) - new Date(a.data));
                 } else if (filtro === 'populares') {
-                    filtrados = [...pdfs].sort((a, b) => b.downloads - a.downloads);
+                    filtrados.sort((a, b) => b.downloads - a.downloads);
                 }
 
                 renderPdfs(filtrados);
@@ -190,6 +200,11 @@
 
         // Modal
         function openPdfModal(titulo, url) {
+            if (url === '#') {
+                alert('PDF ainda não disponível. Faça upload para a pasta "pdfs".');
+                return;
+            }
+            
             document.getElementById('modalTitle').textContent = titulo;
             document.getElementById('pdfViewer').src = url;
             document.getElementById('downloadLink').href = url;
@@ -209,8 +224,8 @@
             }
         });
 
-        // Renderizar PDFs ao carregar
-        renderPdfs();
+        // Carregar PDFs ao iniciar a página
+        loadPdfsFromRepository();
     </script>
 </body>
 </html>
