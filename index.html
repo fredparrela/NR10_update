@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repositório de PDFs - NR10</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📚 Repositório de PDFs - NR10</h1>
+            <p class="subtitle">Central de documentos e materiais de estudo</p>
+        </header>
+
+        <div class="search-container">
+            <input 
+                type="text" 
+                id="searchInput" 
+                class="search-box" 
+                placeholder="🔍 Buscar PDFs..."
+                autocomplete="off"
+            >
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" data-filter="todos">Todos</button>
+            <button class="filter-btn" data-filter="recentes">Recentes</button>
+            <button class="filter-btn" data-filter="populares">Populares</button>
+        </div>
+
+        <div id="pdfGrid" class="pdf-grid">
+            <!-- PDFs serão carregados aqui dinamicamente -->
+        </div>
+
+        <div id="emptyMessage" class="empty-message" style="display: none;">
+            <p>😔 Nenhum PDF encontrado.</p>
+            <p class="hint">Tente outra busca ou adicione novos PDFs.</p>
+        </div>
+    </div>
+
+    <!-- Modal para visualizar PDF -->
+    <div id="pdfModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closePdfModal()">&times;</button>
+            <h2 id="modalTitle"></h2>
+            <iframe id="pdfViewer" class="pdf-viewer"></iframe>
+            <div class="modal-actions">
+                <a id="downloadLink" class="btn-download" download>
+                    📥 Download
+                </a>
+                <button class="btn-close" onclick="closePdfModal()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de PDFs -->
+    <script>
+        // Base de dados de PDFs - Adicione seus PDFs aqui
+        const pdfs = [
+            {
+                id: 1,
+                titulo: "NR-10 - Segurança em Instalações e Serviços em Eletricidade",
+                descricao: "Norma reguladora sobre segurança em eletricidade",
+                arquivo: "https://via.placeholder.com/400x300?text=NR-10",
+                url: "#",
+                categoria: "Normas",
+                data: "2026-06-10",
+                downloads: 150
+            },
+            {
+                id: 2,
+                titulo: "Segurança Elétrica - Guia Prático",
+                descricao: "Guia com práticas de segurança em instalações elétricas",
+                arquivo: "https://via.placeholder.com/400x300?text=Segurança",
+                url: "#",
+                categoria: "Guias",
+                data: "2026-06-09",
+                downloads: 89
+            },
+            {
+                id: 3,
+                titulo: "Equipamentos de Proteção Individual",
+                descricao: "EPI obrigatórios para trabalhos com eletricidade",
+                arquivo: "https://via.placeholder.com/400x300?text=EPI",
+                url: "#",
+                categoria: "Segurança",
+                data: "2026-06-08",
+                downloads: 234
+            },
+            {
+                id: 4,
+                titulo: "Procedimentos de Emergência",
+                descricao: "Como agir em caso de acidentes elétricos",
+                arquivo: "https://via.placeholder.com/400x300?text=Emergência",
+                url: "#",
+                categoria: "Procedimentos",
+                data: "2026-06-07",
+                downloads: 156
+            },
+            {
+                id: 5,
+                titulo: "Inspeção e Manutenção de Redes",
+                descricao: "Procedimentos para inspeção e manutenção preventiva",
+                arquivo: "https://via.placeholder.com/400x300?text=Manutenção",
+                url: "#",
+                categoria: "Manutenção",
+                data: "2026-06-06",
+                downloads: 92
+            },
+            {
+                id: 6,
+                titulo: "Sistemas de Aterramento",
+                descricao: "Fundamentals e aplicações de sistemas de aterramento",
+                arquivo: "https://via.placeholder.com/400x300?text=Aterramento",
+                url: "#",
+                categoria: "Técnico",
+                data: "2026-06-05",
+                downloads: 178
+            }
+        ];
+
+        // Função para renderizar PDFs
+        function renderPdfs(pdfsList = pdfs) {
+            const grid = document.getElementById('pdfGrid');
+            const emptyMessage = document.getElementById('emptyMessage');
+
+            if (pdfsList.length === 0) {
+                grid.innerHTML = '';
+                emptyMessage.style.display = 'flex';
+                return;
+            }
+
+            emptyMessage.style.display = 'none';
+            grid.innerHTML = pdfsList.map(pdf => `
+                <div class="pdf-card" data-id="${pdf.id}">
+                    <div class="pdf-thumbnail">
+                        <img src="${pdf.arquivo}" alt="${pdf.titulo}">
+                        <div class="pdf-overlay">
+                            <button class="btn-view" onclick="openPdfModal('${pdf.titulo}', '${pdf.url}')">
+                                👁️ Visualizar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="pdf-info">
+                        <h3>${pdf.titulo}</h3>
+                        <p class="descricao">${pdf.descricao}</p>
+                        <div class="pdf-meta">
+                            <span class="categoria">${pdf.categoria}</span>
+                            <span class="downloads">📥 ${pdf.downloads}</span>
+                        </div>
+                        <div class="pdf-footer">
+                            <small>${new Date(pdf.data).toLocaleDateString('pt-BR')}</small>
+                            <a href="${pdf.url}" class="btn-download-small" download>Download</a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Busca
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const termo = e.target.value.toLowerCase();
+            const filtrados = pdfs.filter(pdf =>
+                pdf.titulo.toLowerCase().includes(termo) ||
+                pdf.descricao.toLowerCase().includes(termo) ||
+                pdf.categoria.toLowerCase().includes(termo)
+            );
+            renderPdfs(filtrados);
+        });
+
+        // Filtros
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const filtro = btn.dataset.filter;
+                let filtrados = pdfs;
+
+                if (filtro === 'recentes') {
+                    filtrados = [...pdfs].sort((a, b) => new Date(b.data) - new Date(a.data));
+                } else if (filtro === 'populares') {
+                    filtrados = [...pdfs].sort((a, b) => b.downloads - a.downloads);
+                }
+
+                renderPdfs(filtrados);
+            });
+        });
+
+        // Modal
+        function openPdfModal(titulo, url) {
+            document.getElementById('modalTitle').textContent = titulo;
+            document.getElementById('pdfViewer').src = url;
+            document.getElementById('downloadLink').href = url;
+            document.getElementById('pdfModal').style.display = 'flex';
+        }
+
+        function closePdfModal() {
+            document.getElementById('pdfModal').style.display = 'none';
+            document.getElementById('pdfViewer').src = '';
+        }
+
+        // Fechar modal ao clicar fora
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('pdfModal');
+            if (e.target === modal) {
+                closePdfModal();
+            }
+        });
+
+        // Renderizar PDFs ao carregar
+        renderPdfs();
+    </script>
+</body>
+</html>
